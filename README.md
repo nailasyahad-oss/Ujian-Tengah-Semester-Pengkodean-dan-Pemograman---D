@@ -1,1 +1,0 @@
-# Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D
