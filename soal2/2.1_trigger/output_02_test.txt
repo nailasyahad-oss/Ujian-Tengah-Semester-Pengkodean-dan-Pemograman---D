@@ -54,10 +54,10 @@ TAHAP 8 - BUKTI AKHIR: mutasi stok & nilai persediaan
 =====================================================================
  trx_id | item_id |  trx_type  | qty |          trx_date          
 --------+---------+------------+-----+----------------------------
-      1 | BRG001  | PURCHASE   |   5 | 2026-10-12 09:01:13.795003
-      2 | BRG001  | SALE       |   3 | 2026-10-12 09:01:13.799073
-      3 | BRG001  | ADJUSTMENT |   2 | 2026-10-12 09:01:13.79982
-      4 | BRG001  | ADJUSTMENT |  -4 | 2026-10-12 09:01:13.79982
+      1 | BRG001  | PURCHASE   |   5 | 2026-10-12 09:02:39.404522
+      2 | BRG001  | SALE       |   3 | 2026-10-12 09:02:39.410014
+      3 | BRG001  | ADJUSTMENT |   2 | 2026-10-12 09:02:39.410675
+      4 | BRG001  | ADJUSTMENT |  -4 | 2026-10-12 09:02:39.410675
 (4 rows)
 
  item_id |   item_name    | stock_qty | unit_cost | nilai_persediaan 

@@ -1,7 +1,7 @@
 # SOAL 2 UTS - demo_race.py
 # PostgreSQL 16.2 (pgserver sandbox)
 
->>> Terhubung ke 127.0.0.1:52556 db=postgres user=postgres
+>>> Terhubung ke 127.0.0.1:58186 db=postgres user=postgres
 Stok awal BRG001: 5
 
 ======================================================================
