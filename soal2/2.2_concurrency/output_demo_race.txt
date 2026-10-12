@@ -1,0 +1,63 @@
+# SOAL 2 UTS - demo_race.py
+# PostgreSQL 16.2 (pgserver sandbox)
+
+>>> Terhubung ke 127.0.0.1:52556 db=postgres user=postgres
+Stok awal BRG001: 5
+
+======================================================================
+TEKNIK 1 - SELECT ... FOR UPDATE (trigger) | stok awal: 1
+======================================================================
+Stok sebelum demo: 1
+[kasir-A] BEGIN
+[kasir-A] INSERT SALE 1  (trigger: SELECT ... FOR UPDATE)
+[kasir-A] kunci item didapat, istirahat 2s sambil menahan transaksi
+[kasir-B] BEGIN
+[kasir-B] INSERT SALE 1  (trigger: SELECT ... FOR UPDATE)
+[kasir-A] COMMIT sukses
+[kasir-B] ROLLBACK (error)
+[kasir-B] ERROR (SQLSTATE 23514): STOK TIDAK MENCUKUPI: item_id BRG001, stok tersedia 0, qty diminta 1, stok menjadi -1. Transaksi ditolak (ROLLBACK).
+
+Hasil kasir-A : OK
+Hasil kasir-B : GAGAL  -> SQLSTATE 23514: STOK TIDAK MENCUKUPI: item_id BRG001, stok tersedia 0, qty diminta 1, stok menjadi -1. Transak
+Stok akhir    : 0  (harap 0, BUKAN -1)
+Jumlah trx SALE BRG001: 1  (harap 1)
+TEKNIK 1 -> PASS (tepat SATU berhasil, SATU ditolak)
+
+======================================================================
+TEKNIK 2 - BEGIN ISOLATION LEVEL SERIALIZABLE | stok awal: 1
+======================================================================
+Stok sebelum demo: 1
+[kasir-A] SERIALIZABLE, baca stok = 1
+[kasir-B] SERIALIZABLE, baca stok = 1
+[kasir-B] INSERT SALE 1
+[kasir-B] COMMIT sukses
+[kasir-A] INSERT SALE 1
+[kasir-A] ERROR (SQLSTATE 40001): could not serialize access due to read/write dependencies among transactions
+
+--- Retry wajib untuk kasir-B setelah SQLSTATE 40001 ---
+[kasir-B(retry)] percobaan 1: baca stok = 0
+[kasir-B(retry)] percobaan 1: stok tidak cukup -> ROLLBACK (penolakan BERSIH, bukan error 40001)
+
+Stok akhir    : 0  (harap 0)
+Jumlah trx SALE BRG001: 1  (harap 1)
+Hasil sesi    : kasir-B=OK (commit sukses); kasir-A=GAGAL (SQLSTATE 40001: could not serialize access due to read/write dependencies among transactions)
+TEKNIK 2 -> PASS (tepat satu COMMIT sukses, satu SQLSTATE 40001, retry menolak dengan bersih, stok akhir 0)
+
+======================================================================
+TEKNIK 3 - UPDATE BERSYARAT ATOMIK | stok awal: 1
+======================================================================
+Stok sebelum demo: 1
+[kasir-A] UPDATE bersyarat: rowcount=1 -> BERHASIL
+[kasir-B] UPDATE bersyarat: rowcount=0 -> DITOLAK (stok tidak cukup)
+
+Hasil: [('kasir-A', 'OK'), ('kasir-B', 'DITOLAK')]
+Stok akhir    : 0  (harap 0, BUKAN -1)
+TEKNIK 3 -> PASS (tepat satu rowcount=1, satu rowcount=0, tanpa retry maupun deadlock)
+
+======================================================================
+RINGKASAN
+======================================================================
+Stok akhir BRG001: 0 (harap 0, TIDAK -1)
+Catatan: tabel transaksi di-reset di awal tiap demo, jadi hitungan
+akhir mewakili transaksi demo terakhir (Teknik 3 langsung UPDATE
+inventory_items tanpa menambah baris inventory_transactions).
