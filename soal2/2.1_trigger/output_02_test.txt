@@ -1,0 +1,97 @@
+# SOAL 2 UTS - 02_test_trigger.sql
+# PostgreSQL 16.2 (pgserver sandbox)
+
+
+=====================================================================
+TAHAP 1 - SEED: item BRG001 stok 10, unit_cost 50.000
+=====================================================================
+ item_id |   item_name    | stock_qty | unit_cost 
+---------+----------------+-----------+-----------
+ BRG001  | Barang Uji 001 |        10 |  50000.00
+ BRG002  | Barang Uji 002 |         5 |  25000.00
+(2 rows)
+
+
+=====================================================================
+TAHAP 2 - POSITIF: PURCHASE 5 -> stok 15
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 3 - POSITIF: SALE 3 -> stok 12
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 4 - POSITIF: ADJUSTMENT +2 -> 14, lalu ADJUSTMENT -4 -> 10
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 5 - NEGATIF: SALE 11 saat stok 10 (harus ERROR, stok tetap 10)
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 6 - NEGATIF: qty <= 0 pada SALE dan PURCHASE
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 7 - NEGATIF: item_id tidak ditemukan + ADJUSTMENT memaksa stok negatif
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 7b - NEGATIF: item_id tidak ditemukkan (jalur fungsi kita)
+          (FK sementara dimatikan via dynamic SQL agar pesan fungsi
+           yang terlihat; ENABLE lagi di akhir, transaksi utuh)
+=====================================================================
+DO
+
+=====================================================================
+TAHAP 8 - BUKTI AKHIR: mutasi stok & nilai persediaan
+=====================================================================
+ trx_id | item_id |  trx_type  | qty |          trx_date          
+--------+---------+------------+-----+----------------------------
+      1 | BRG001  | PURCHASE   |   5 | 2026-10-12 09:01:13.795003
+      2 | BRG001  | SALE       |   3 | 2026-10-12 09:01:13.799073
+      3 | BRG001  | ADJUSTMENT |   2 | 2026-10-12 09:01:13.79982
+      4 | BRG001  | ADJUSTMENT |  -4 | 2026-10-12 09:01:13.79982
+(4 rows)
+
+ item_id |   item_name    | stock_qty | unit_cost | nilai_persediaan 
+---------+----------------+-----------+-----------+------------------
+ BRG001  | Barang Uji 001 |        10 |  50000.00 |        500000.00
+ BRG002  | Barang Uji 002 |         5 |  25000.00 |        125000.00
+(2 rows)
+
+ net_moved 
+-----------
+         0
+(1 row)
+
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:31: NOTICE:  Stok sebelum: 10
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:31: NOTICE:  POSITIF PURCHASE 5: stok sesudah = 15 (harap 15) -> PASS
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:46: NOTICE:  POSITIF SALE 3: stok sesudah = 12 (harap 12) -> PASS
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:66: NOTICE:  POSITIF ADJUSTMENT +2: stok = 14 (harap 14) -> PASS
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:66: NOTICE:  POSITIF ADJUSTMENT -4: stok = 10 (harap 10) -> PASS
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:97: NOTICE:  SEBELUM : stok = 10, jumlah baris trx = 4
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:97: NOTICE:  Mencoba INSERT SALE 11 ...
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:97: NOTICE:  Error: STOK TIDAK MENCUKUPI: item_id BRG001, stok tersedia 10, qty diminta 11, stok menjadi -1. Transaksi ditolak (ROLLBACK).
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:97: NOTICE:  SESUDAH : stok = 10 (harap 10), trx BRG001 = 4 (harap 4)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:97: NOTICE:  NEGATIF SALE 11 -> PASS (stok & jumlah trx tidak berubah)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:145: NOTICE:  NEGATIF SALE qty=0 -> PASS: QTY TIDAK VALID: SALE harus qty > 0 (diberikan 0)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:145: NOTICE:  NEGATIF SALE qty=-3 -> PASS: QTY TIDAK VALID: SALE harus qty > 0 (diberikan -3)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:145: NOTICE:  NEGATIF PURCHASE qty=0 -> PASS: QTY TIDAK VALID: PURCHASE harus qty > 0 (diberikan 0)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:145: NOTICE:  NEGATIF PURCHASE qty=-10 -> PASS: QTY TIDAK VALID: PURCHASE harus qty > 0 (diberikan -10)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:145: NOTICE:  NEGATIF ADJUSTMENT qty=0 -> PASS: QTY TIDAK VALID: ADJUSTMENT tidak boleh 0 (diberikan 0, qty bertanda)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:145: NOTICE:  Sesudah uji qty tidak valid: jumlah total trx = 4 (semua ditolak)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:183: NOTICE:  Jumlah trx sebelum uji: 4
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:183: NOTICE:  NEGATIF item tidak ditemukan -> PASS: insert or update on table "inventory_transactions" violates foreign key constraint "inventory_transactions_item_id_fkey"
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:183: NOTICE:  NEGATIF ADJUSTMENT -100 (stok 10) -> PASS: STOK TIDAK MENCUKUPI: item_id BRG001, stok tersedia 10, qty diminta -100, stok menjadi -90. Transaksi ditolak (ROLLBACK).
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:183: NOTICE:  Jumlah trx sesudah uji: 4, stok BRG001 = 10 (harap tetap 10)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:183: NOTICE:  TAHAP 7 -> PASS (tidak ada baris trx baru, stok utuh)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:218: NOTICE:  Trigger FK "RI_ConstraintTrigger_c_16402" dimatikan sementara.
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:218: NOTICE:  NEGATIF 7b PASS (ditolak oleh fungsi kita): ITEM TIDAK DITEMUKAN: item_id TIDAKADA tidak ada di inventory_items
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/02_test_trigger.sql:218: NOTICE:  Trigger FK "RI_ConstraintTrigger_c_16402" dihidupkan kembali.

@@ -1,0 +1,59 @@
+# SOAL 2 UTS - 03_bonus_journal.sql
+# PostgreSQL 16.2 (pgserver sandbox)
+
+DROP TABLE
+CREATE TABLE
+CREATE INDEX
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+
+=====================================================================
+BONUS - Uji jurnal otomatis + keseimbangan D=K + rollback
+=====================================================================
+UPDATE 1
+DO
+
+--- (8) Isi gl_entries dan keseimbangan SUM(debit)=SUM(credit) per transaksi
+ trx_id | item_id |  trx_type  | qty |         account_name         |   debit   |  credit   
+--------+---------+------------+-----+------------------------------+-----------+-----------
+     14 | BRG001  | PURCHASE   |   5 | Persediaan Barang Dagangan   | 250000.00 |      0.00
+     14 | BRG001  | PURCHASE   |   5 | Kas                          |      0.00 | 250000.00
+     15 | BRG001  | SALE       |   3 | Beban Pokok Pendapatan (HPP) | 150000.00 |      0.00
+     15 | BRG001  | SALE       |   3 | Persediaan Barang Dagangan   |      0.00 | 150000.00
+     16 | BRG001  | ADJUSTMENT |   2 | Persediaan Barang Dagangan   | 100000.00 |      0.00
+     16 | BRG001  | ADJUSTMENT |   2 | Selisih Persediaan           |      0.00 | 100000.00
+     17 | BRG001  | ADJUSTMENT |  -4 | Selisih Persediaan           | 200000.00 |      0.00
+     17 | BRG001  | ADJUSTMENT |  -4 | Persediaan Barang Dagangan   |      0.00 | 200000.00
+(8 rows)
+
+ trx_id | total_debit | total_credit |  status  
+--------+-------------+--------------+----------
+     14 |   250000.00 |    250000.00 | SEIMBANG
+     15 |   150000.00 |    150000.00 | SEIMBANG
+     16 |   100000.00 |    100000.00 | SEIMBANG
+     17 |   200000.00 |    200000.00 | SEIMBANG
+(4 rows)
+
+
+--- (8) Nilai persediaan = stock_qty x unit_cost
+ item_id | stock_qty | unit_cost | nilai_persediaan 
+---------+-----------+-----------+------------------
+ BRG001  |        10 |  50000.00 |        500000.00
+ BRG002  |         5 |  25000.00 |        125000.00
+(2 rows)
+
+
+--- BONUS: transaksi tidak seimbang stok TIDAK boleh menghasilkan jurnal
+UPDATE 1
+DO
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/03_bonus_journal.sql:26: NOTICE:  table "gl_entries" does not exist, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/03_bonus_journal.sql:171: NOTICE:  BONUS skenario normal: stok akhir 10 (harap 10) -> PASS
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/03_bonus_journal.sql:227: NOTICE:  SEBELUM: stok = 5, jml baris gl_entries = 8
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/03_bonus_journal.sql:227: NOTICE:  SALE 11 (stok 5) ditolak: STOK TIDAK MENCUKUPI: item_id BRG001, stok tersedia 5, qty diminta 11, stok menjadi -6. Transaksi ditolak (ROLLBACK).
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/03_bonus_journal.sql:227: NOTICE:  SESUDAH: stok = 5, jml baris gl_entries = 8 (harap tetap 8)
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/03_bonus_journal.sql:227: NOTICE:  BONUS rollback jurnal -> PASS (tidak ada jurnal yatim)
