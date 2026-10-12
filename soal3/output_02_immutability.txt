@@ -1,0 +1,15 @@
+# SOAL 3 UTS - 02_immutability.sql
+# PostgreSQL 16.2 (pgserver sandbox)
+
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+COMMENT
+CREATE FUNCTION
+DROP TRIGGER
+CREATE TRIGGER
+COMMENT
+CREATE FUNCTION
+COMMENT
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/02_immutability.sql:78: NOTICE:  trigger "trg_immutable_journal_header" for relation "journal_headers" does not exist, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/02_immutability.sql:127: NOTICE:  trigger "trg_immutable_journal_lines" for relation "journal_lines" does not exist, skipping

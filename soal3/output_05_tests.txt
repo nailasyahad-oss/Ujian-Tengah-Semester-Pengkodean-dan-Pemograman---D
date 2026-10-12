@@ -1,0 +1,228 @@
+# SOAL 3 UTS - 05_tests.sql
+# PostgreSQL 16.2 (pgserver sandbox)
+
+=====================================================================
+PERSIAPAN: reset data & pastikan fungsi tersedia
+=====================================================================
+TRUNCATE TABLE
+INSERT 0 0
+ kode_akun | id 
+-----------+----
+ 1101      |  1
+ 1102      |  2
+ 2101      |  4
+ 5201      |  3
+(4 rows)
+
+
+=====================================================================
+TES 1: POST JURNAL SEIMBANG (KAS KELUAR - Beban Listrik 500rb)
+         D Beban Listrik 500.000 / K Kas 500.000
+=====================================================================
+
+--- Verifikasi jurnal 1: status POSTED, hash terisi, verify = true ---
+ id | nomor_referensi | status_posting | hash_prefix | verify 
+----+-----------------+----------------+-------------+--------
+(0 rows)
+
+
+--- Audit log jurnal 1 ---
+ action | actor | at | nomor 
+--------+-------+----+-------
+(0 rows)
+
+
+=====================================================================
+TES 2: POST JURNAL TIDAK SEIMBANG (HARUS ERROR)
+         D 300.000 != K 200.000
+=====================================================================
+
+=====================================================================
+TES 3: POST JURNAL DUPLIKAT NO BUKTI (HARUS ERROR)
+=====================================================================
+
+=====================================================================
+TES 4: POST JURNAL LINE KEDUA NOL (HARUS ERROR)
+=====================================================================
+
+=====================================================================
+TES 5: POST JURNAL LINE KEDUA ISI (HARUS ERROR)
+=====================================================================
+
+=====================================================================
+TES 6: POST JURNAL AKUN TIDAK ADA (HARUS ERROR)
+=====================================================================
+
+=====================================================================
+TES 7: UPDATE HEADER POSTED (HARUS ERROR - IMMUTABILITY)
+=====================================================================
+UPDATE 0
+
+=====================================================================
+TES 8: DELETE HEADER POSTED (HARUS ERROR - IMMUTABILITY)
+=====================================================================
+DELETE 0
+
+=====================================================================
+TES 9: UPDATE LINE POSTED (HARUS ERROR - IMMUTABILITY)
+=====================================================================
+UPDATE 0
+
+=====================================================================
+TES 10: DELETE LINE POSTED (HARUS ERROR - IMMUTABILITY)
+=====================================================================
+DELETE 0
+
+=====================================================================
+TES 11: INSERT LINE KE HEADER POSTED (HARUS ERROR - IMMUTABILITY)
+=====================================================================
+
+=====================================================================
+TES 12: REVERSE JOURNAL (POSITIF - STORNO)
+=====================================================================
+
+--- Verifikasi jurnal asal jadi REVERSED ---
+ id | nomor_referensi | status_posting | reversed_by_header_id 
+----+-----------------+----------------+-----------------------
+(0 rows)
+
+
+--- Verifikasi jurnal storno (POSTED, reversal_of_header_id terisi) ---
+ id | nomor_referensi | status_posting | reversal_of_header_id 
+----+-----------------+----------------+-----------------------
+(0 rows)
+
+
+--- Verifikasi lines storno (debit<->kredit ditukar) ---
+ nomor_referensi | kode_akun | debit | credit 
+-----------------+-----------+-------+--------
+(0 rows)
+
+
+=====================================================================
+TES 13: STORNO GANDA (HARUS ERROR)
+=====================================================================
+
+=====================================================================
+TES 13b: POST JURNAL KE-2 (untuk uji storno tanpa alasan)
+         D Utang Usaha 250.000 / K Kas 250.000
+=====================================================================
+
+=====================================================================
+TES 14: STORNO TANPA ALASAN (HARUS ERROR)
+=====================================================================
+
+=====================================================================
+TES 15: VERIFIKASI HASH JURNAL ASLI (POSITIF - SEHARUSNYA MATCH)
+         (status tidak termasuk dalam hash, jadi tetap MATCH setelah storno)
+=====================================================================
+ header_id | stored_hash | computed_hash | match |                  diff                  
+-----------+-------------+---------------+-------+----------------------------------------
+           |             |               | f     | hash_checksum NULL (belum di-posting?)
+(1 row)
+
+
+=====================================================================
+TES 16: VERIFIKASI HASH SEMUA JURNAL
+=====================================================================
+ header_id | nomor_referensi | status_posting | match | diff 
+-----------+-----------------+----------------+-------+------
+(0 rows)
+
+
+=====================================================================
+TES 17: TAMPER TEST (ubah data lewat jalur superuser, bypass trigger)
+         -> verify_journal_hash HARUS false
+=====================================================================
+SET
+UPDATE 0
+SET
+ header_id | stored_hash | computed_hash | match |                  diff                  
+-----------+-------------+---------------+-------+----------------------------------------
+           |             |               | f     | hash_checksum NULL (belum di-posting?)
+(1 row)
+
+
+=====================================================================
+TES 17B: VERIFIKASI HASH CHAIN (deteksi penyisipan/penghapusan di tengah)
+         (tamper di TES 17 seharusnya membuat data_ok=FALSE di header 1
+          dan chain_ok=FALSE di header 2 karena prev hash tidak konsisten)
+=====================================================================
+ header_id | nomor_referensi | stored_hash | computed_hash | data_ok | chain_ok 
+-----------+-----------------+-------------+---------------+---------+----------
+(0 rows)
+
+
+=====================================================================
+TES 18: NET SALDO AKUN SETELAH STORNO (HARUS 0 UNTUK AKUN TERKAIT)
+         (jurnal asal + jurnal storno saling meniadakan)
+=====================================================================
+ kode_akun | nama_akun | total_debit | total_credit | net_saldo 
+-----------+-----------+-------------+--------------+-----------
+(0 rows)
+
+
+=====================================================================
+TES 19: AUDIT LOG (cek INSERT/UPDATE/DELETE tercatat)
+=====================================================================
+ table_name | action | actor | at | nomor | old_status | new_status 
+------------+--------+-------+----+-------+------------+------------
+(0 rows)
+
+
+=====================================================================
+SELESAI - Periksa bahwa:
+  TES 1  -> POSTED, hash terisi, verify=true
+  TES 2-6, 7-11, 13, 14 -> ERROR (ditolak)
+  TES 12 -> storno berhasil, asal REVERSED
+  TES 15,16 -> MATCH (semua jurnal utuh)
+  TES 17 -> verify=FALSE (tamper terdeteksi)
+  TES 18 -> net saldo = 0
+=====================================================================
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:46: ERROR:  function compute_journal_hash(bigint) does not exist
+LINE 2:        SET hash_checksum = compute_journal_hash(v_header_id)
+                                   ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  UPDATE journal_headers
+       SET hash_checksum = compute_journal_hash(v_header_id)
+     WHERE id = v_header_id
+    RETURNING hash_checksum
+CONTEXT:  PL/pgSQL function post_journal(jsonb,jsonb) line 133 at SQL statement
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:81: ERROR:  JURNAL_TIDAK_SEIMBANG: Total Debit (300000.00) != Total Credit (200000.00)
+CONTEXT:  PL/pgSQL function post_journal(jsonb,jsonb) line 91 at RAISE
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:103: ERROR:  function compute_journal_hash(bigint) does not exist
+LINE 2:        SET hash_checksum = compute_journal_hash(v_header_id)
+                                   ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  UPDATE journal_headers
+       SET hash_checksum = compute_journal_hash(v_header_id)
+     WHERE id = v_header_id
+    RETURNING hash_checksum
+CONTEXT:  PL/pgSQL function post_journal(jsonb,jsonb) line 133 at SQL statement
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:125: ERROR:  LINE_1_KEDUA_NOL: debit dan kredit tidak boleh keduanya 0
+CONTEXT:  PL/pgSQL function post_journal(jsonb,jsonb) line 76 at RAISE
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:147: ERROR:  LINE_1_KEDUA_ISI: debit dan kredit tidak boleh keduanya > 0
+CONTEXT:  PL/pgSQL function post_journal(jsonb,jsonb) line 81 at RAISE
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:166: ERROR:  LINE_1_AKUN_TIDAK_ADA: account_id 999999 tidak ditemukan
+CONTEXT:  PL/pgSQL function post_journal(jsonb,jsonb) line 62 at RAISE
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:208: ERROR:  null value in column "header_id" of relation "journal_lines" violates not-null constraint
+DETAIL:  Failing row contains (5, null, 4, 100000.00, 0.00, 2026-10-12 11:59:31.986381+00, null).
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:217: ERROR:  HEADER_TIDAK_DITEMUKAN: id <NULL>
+CONTEXT:  PL/pgSQL function reverse_journal(bigint,text) line 19 at RAISE
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:245: ERROR:  HEADER_TIDAK_DITEMUKAN: id <NULL>
+CONTEXT:  PL/pgSQL function reverse_journal(bigint,text) line 19 at RAISE
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:268: ERROR:  JURNAL IMMUTABLE: Tidak boleh menambah line ke header POSTED (hanya saat reversal via RPC).
+CONTEXT:  PL/pgSQL function enforce_journal_immutability_lines() line 17 at RAISE
+SQL statement "INSERT INTO journal_lines (
+            header_id, account_id, debit, credit, created_by, created_at
+        ) VALUES (
+            v_header_id,
+            (v_line->>'account_id')::BIGINT,
+            COALESCE((v_line->>'debit')::NUMERIC(18,2), 0),
+            COALESCE((v_line->>'credit')::NUMERIC(18,2), 0),
+            COALESCE(v_line->>'created_by', v_actor),
+            now()
+        )"
+PL/pgSQL function post_journal(jsonb,jsonb) line 120 at SQL statement
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/05_tests.sql:277: ERROR:  HEADER_TIDAK_DITEMUKAN: id <NULL>
+CONTEXT:  PL/pgSQL function reverse_journal(bigint,text) line 19 at RAISE

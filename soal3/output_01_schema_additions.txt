@@ -1,0 +1,42 @@
+# SOAL 3 UTS - 01_schema_additions.sql
+# PostgreSQL 16.2 (pgserver sandbox)
+
+ALTER TABLE
+DO
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+ALTER TABLE
+COMMENT
+COMMENT
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+REVOKE
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+DROP TRIGGER
+DROP TRIGGER
+DO
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:22: NOTICE:  column "created_at" of relation "journal_headers" already exists, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:22: NOTICE:  column "posted_at" of relation "journal_headers" already exists, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:50: NOTICE:  column "created_at" of relation "journal_lines" already exists, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:123: ERROR:  syntax error at or near ")"
+LINE 12: ...b(NEW)::text || v_actor || now()::text), 'sha256'), 'hex'));
+                                                                      ^
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:126: NOTICE:  trigger "trg_audit_journal_headers" for relation "journal_headers" does not exist, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:129: ERROR:  function audit_trigger_fn() does not exist
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:132: NOTICE:  trigger "trg_audit_journal_lines" for relation "journal_lines" does not exist, skipping
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:135: ERROR:  function audit_trigger_fn() does not exist
+psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal3/db/01_schema_additions.sql:138: ERROR:  function audit_trigger_fn() does not exist
