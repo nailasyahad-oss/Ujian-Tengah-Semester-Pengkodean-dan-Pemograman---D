@@ -1,9 +1,0 @@
-# SOAL 2 UTS - 01_trigger.sql
-# PostgreSQL 16.2 (pgserver sandbox)
-
-CREATE FUNCTION
-COMMENT
-DROP TRIGGER
-CREATE TRIGGER
-COMMENT
-psql:D:/Ujian-Tengah-Semester-Pengkodean-dan-Pemograman---D/soal2/2.1_trigger/01_trigger.sql:99: NOTICE:  trigger "trg_update_stock_and_journal" for relation "inventory_transactions" does not exist, skipping

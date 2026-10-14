@@ -1,9 +1,0 @@
-# SOAL 3 UTS - 04_rpc_post_and_reverse.sql
-# PostgreSQL 16.2 (pgserver sandbox)
-
-CREATE FUNCTION
-COMMENT
-CREATE FUNCTION
-COMMENT
-CREATE FUNCTION
-COMMENT
